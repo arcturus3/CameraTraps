@@ -155,3 +155,36 @@ class YOLOV5Base:
                 pbar.update(1)
                 results.extend(batch_results)
             return results
+
+    def tensor_batch_image_detection(self, batch, img_sizes=None, conf_thres=0.2):
+        """
+        Perform detection on a single image.
+        
+        Args:
+            img (torch.Tensor): 
+                Input image tensor.
+            img_size (tuple): 
+                Original image size.
+            img_path (str): 
+                Image path or identifier.
+            conf_thres (float, optional): 
+                Confidence threshold for predictions. Defaults to 0.2.
+            id_strip (str, optional): 
+                Characters to strip from img_id. Defaults to None.
+
+        Returns:
+            dict: Detection results.
+        """
+        if img_sizes is None:
+            img_sizes = [(batch.shape[2], batch.shape[3])] * batch.shape[0]
+        predictions = self.model(batch.to(self.device))[0].detach().cpu()
+        predictions = non_max_suppression(predictions, conf_thres=conf_thres)
+        batch_results = []
+        for i, pred in enumerate(predictions):
+            if pred.size(0) == 0:  
+                continue
+            pred = pred.numpy()
+            pred[:, :4] = scale_coords([self.IMAGE_SIZE] * 2, pred[:, :4], img_sizes[i]).round()
+            res = self.results_generation(pred, None, None)
+            batch_results.append(res)
+        return batch_results
