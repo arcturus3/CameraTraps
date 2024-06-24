@@ -181,8 +181,6 @@ class YOLOV5Base:
         predictions = non_max_suppression(predictions, conf_thres=conf_thres)
         batch_results = []
         for i, pred in enumerate(predictions):
-            if pred.size(0) == 0:  
-                continue
             pred = pred.numpy()
             pred[:, :4] = scale_coords([self.IMAGE_SIZE] * 2, pred[:, :4], img_sizes[i]).round()
             res = self.results_generation(pred, None, None)
